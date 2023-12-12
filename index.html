@@ -61,22 +61,65 @@
         var scene = null;
         var sceneToRender = null;
         var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
-        var delayCreateScene = function () {
-            
-            var scene = new BABYLON.Scene(engine);  
+        var createScene = function () {
+            const scene = new BABYLON.Scene(engine);
         
-            BABYLON.SceneLoader.ImportMesh(
-                "",
-                "https://raw.githubusercontent.com/EpicSoundtrack/Thor/main/data/glb/",
-                "Ragnarok_05.glb",
-                scene,
-                function (meshes) {          
-                    scene.createDefaultCameraOrLight(true, true, true);
-                    scene.createDefaultEnvironment();
+            scene.createDefaultEnvironment({
+                createGround: false,
+                createSkybox: false,
+                environmentTexture: "https://raw.githubusercontent.com/EpicSoundtrack/Thor/main/data/env/small_hangar.env"
             });
         
+            //Adding a light
+            //var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
+        
+            //Adding an Arc Rotate Camera
+            var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 100, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, false);
+            camera.minZ = .01;
+            camera.radius = .09;
+            camera.wheelDeltaPercentage = .01;
+            camera.lowerRadiusLimit = .045;
+            camera.upperRadiusLimit = .125;
+            
+            var defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
+            defaultPipeline.samples = 64;
+            defaultPipeline.fxaaEnabled = true;
+            defaultPipeline.imageProcessing.toneMappingEnabled = true;
+        
+            defaultPipeline.bloomEnabled = true;
+            //defaultPipeline.bloomKernel = 10;
+            //defaultPipeline.bloomWeight = 0.5;
+            //defaultPipeline.bloomThreshold = 0.0;
+            //defaultPipeline.bloomScale = 0.2;
+        
+            defaultPipeline.imageProcessing.vignetteEnabled = true;
+            defaultPipeline.imageProcessing.vignetteWeight = 4.0;
+            //defaultPipeline.imageProcessing.vignetteBlendMode = BABYLON.ImageProcessingPostProcess.VIGNETTEMODE_MULTIPLY;
+            //defaultPipeline.imageProcessing.vignetteColor = BABYLON.Color3(0,0,0);
+        
+        
+            // The first parameter can be used to specify which mesh to import. Here we import all meshes
+            BABYLON.SceneLoader.ImportMesh(
+                "",
+               "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb/",
+                "Ragnarok_Full_06_TC.glb",
+                scene
+             //   scene, function (meshes) {
+            //      var root = meshes[0];
+                    //var root = scene.getMeshByName("__root__");
+                    //root.setEnabled(true);
+            //        //defaultPipeline.imageProcessing.toneMappingEnabled = true;
+             //   }
+            );
+        
+            //BABYLON.SceneLoader.ImportMeshAsync("", 
+            //    "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb", 
+            //    "Ragnarok_Full_06_TC.glb").then((result) => {
+            //    });
+            
             return scene;
-        };
+        }
                 window.initFunction = async function() {
                     
                     
@@ -93,7 +136,7 @@
                     window.engine = await asyncEngineCreation();
         if (!engine) throw 'engine should not be null.';
         startRenderLoop(engine, canvas);
-        window.scene = delayCreateScene();};
+        window.scene = createScene();};
         initFunction().then(() => {sceneToRender = scene                    
         });
 
