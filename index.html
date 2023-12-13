@@ -71,7 +71,10 @@
             });
         
             //Adding a light
-            //var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
+            var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(.01, 0.05, 0), scene);
+            light.intensity = .01
+            const shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+            shadowGenerator.usePoissonSampling = true;
         
             //Adding an Arc Rotate Camera
             var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 100, BABYLON.Vector3.Zero(), scene);
@@ -81,43 +84,45 @@
             camera.wheelDeltaPercentage = .01;
             camera.lowerRadiusLimit = .045;
             camera.upperRadiusLimit = .125;
-            
+        
             var defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
             defaultPipeline.samples = 64;
             defaultPipeline.fxaaEnabled = true;
             defaultPipeline.imageProcessing.toneMappingEnabled = true;
         
             defaultPipeline.bloomEnabled = true;
-            //defaultPipeline.bloomKernel = 10;
-            //defaultPipeline.bloomWeight = 0.5;
-            //defaultPipeline.bloomThreshold = 0.0;
-            //defaultPipeline.bloomScale = 0.2;
+            defaultPipeline.bloomScale = 0.2;
+            defaultPipeline.bloomWeight = 0.05;
         
             defaultPipeline.imageProcessing.vignetteEnabled = true;
             defaultPipeline.imageProcessing.vignetteWeight = 4.0;
-            //defaultPipeline.imageProcessing.vignetteBlendMode = BABYLON.ImageProcessingPostProcess.VIGNETTEMODE_MULTIPLY;
-            //defaultPipeline.imageProcessing.vignetteColor = BABYLON.Color3(0,0,0);
         
-        
-            // The first parameter can be used to specify which mesh to import. Here we import all meshes
             BABYLON.SceneLoader.ImportMesh(
                 "",
-               "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb/",
-                "Ragnarok_Full_06_TC.glb",
-                scene
-             //   scene, function (meshes) {
-            //      var root = meshes[0];
-                    //var root = scene.getMeshByName("__root__");
-                    //root.setEnabled(true);
-            //        //defaultPipeline.imageProcessing.toneMappingEnabled = true;
-             //   }
+                "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb/",
+                "Ragnarok_Full_07_TC.glb",
+                scene,
+                function (meshes) {
+                    var root = scene.getMeshByName("__root__");
+                        root.isEnabled = true;
+        
+                    var ground = scene.getMeshByName("node0_primitive12");
+                        ground.receiveShadows= true;
+        
+                    var parent = scene.getMeshByName("node0");
+        
+                    var mymesh = parent.getChildMeshes();
+                    for (var i = 0; i < mymesh.length; i++) {
+                        mymesh[i].receiveShadows = true;
+                        shadowGenerator.addShadowCaster(mymesh[i]);
+                    }
+                    shadowGenerator.removeShadowCaster("node0_primitive13");
+                }
             );
         
-            //BABYLON.SceneLoader.ImportMeshAsync("", 
-            //    "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb", 
-            //    "Ragnarok_Full_06_TC.glb").then((result) => {
-            //    });
-            
+        
+        
+        
             return scene;
         }
                 window.initFunction = async function() {
