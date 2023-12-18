@@ -61,70 +61,104 @@
         var scene = null;
         var sceneToRender = null;
         var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
-        var createScene = function () {
-            const scene = new BABYLON.Scene(engine);
-        
-            scene.createDefaultEnvironment({
-                createGround: false,
-                createSkybox: false,
-                environmentTexture: "https://raw.githubusercontent.com/EpicSoundtrack/Thor/main/data/env/small_hangar.env"
-            });
-        
-            //Adding a light
-            var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(.01, 0.05, 0), scene);
-            light.intensity = .01
-            const shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
-            shadowGenerator.usePoissonSampling = true;
-        
-            //Adding an Arc Rotate Camera
-            var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 100, BABYLON.Vector3.Zero(), scene);
-            camera.attachControl(canvas, false);
-            camera.minZ = .01;
-            camera.radius = .09;
-            camera.wheelDeltaPercentage = .01;
-            camera.lowerRadiusLimit = .045;
-            camera.upperRadiusLimit = .125;
-        
-            var defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
-            defaultPipeline.samples = 64;
-            defaultPipeline.fxaaEnabled = true;
-            defaultPipeline.imageProcessing.toneMappingEnabled = true;
-        
-            defaultPipeline.bloomEnabled = true;
-            defaultPipeline.bloomScale = 0.2;
-            defaultPipeline.bloomWeight = 0.05;
-        
-            defaultPipeline.imageProcessing.vignetteEnabled = true;
-            defaultPipeline.imageProcessing.vignetteWeight = 4.0;
-        
-            BABYLON.SceneLoader.ImportMesh(
-                "",
-                "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb/",
-                "Ragnarok_Full_07_TC.glb",
-                scene,
-                function (meshes) {
-                    var root = scene.getMeshByName("__root__");
-                        root.isEnabled = true;
-        
-                    var ground = scene.getMeshByName("node0_primitive12");
-                        ground.receiveShadows= true;
-        
-                    var parent = scene.getMeshByName("node0");
-        
-                    var mymesh = parent.getChildMeshes();
-                    for (var i = 0; i < mymesh.length; i++) {
-                        mymesh[i].receiveShadows = true;
-                        shadowGenerator.addShadowCaster(mymesh[i]);
-                    }
-                    shadowGenerator.removeShadowCaster("node0_primitive13");
-                }
-            );
-        
-        
-        
-        
-            return scene;
-        }
+        var canvas = document.getElementById("renderCanvas");
+
+var createScene = function () {
+    var scene = new BABYLON.Scene(engine);
+    var url;
+    var fileName;
+    var env =  "https://raw.githubusercontent.com/EpicSoundtrack/Thor/main/data/env/small_hangar.env";
+
+
+    engine.setHardwareScalingLevel(0.5)
+    scene.createDefaultEnvironment({
+        createGround: false,
+        createSkybox: false,
+        environmentTexture: env,
+	    environmentIntensity: .5
+    }); 
+    
+    //Light
+    var light = new BABYLON.DirectionalLight("Direct", new BABYLON.Vector3(0.5, -1, 0.0), scene);
+	light.position = new BABYLON.Vector3(0,50,0);
+	light.intensity = 1.5;
+    var shadowGenerator = new BABYLON.ShadowGenerator(2048, light);
+	shadowGenerator.useBlurExponentialShadowMap = true;
+	shadowGenerator.useKernelBlur = true;
+	shadowGenerator.blurKernel = 50;
+	shadowGenerator.blurScale = 1;
+
+
+
+    //Adding an Arc Rotate Camera
+    var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 100, BABYLON.Vector3.Zero(), scene);    
+	camera.attachControl(canvas, true);		
+	camera.minZ = .1;
+	camera.radius = 120.0;
+	camera.pinchDeltaPercentage = 0;
+	camera.wheelDeltaPercentage = 0;
+	camera.lowerBetaLimit   = 0.0;	
+	camera.upperBetaLimit   = 2.0;	
+	camera.lowerRadiusLimit = 50.0;
+	camera.upperRadiusLimit = 200.0;
+    
+    var defaultPipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
+	defaultPipeline.samples = 64;
+	defaultPipeline.fxaaEnabled = true;
+	defaultPipeline.imageProcessing.toneMappingEnabled = true;
+
+	defaultPipeline.bloomEnabled = true;
+
+	defaultPipeline.imageProcessing.vignetteEnabled = true;
+	defaultPipeline.imageProcessing.vignetteWeight = 4.0; 
+
+
+    url = "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb/";
+
+    fileName = "Ragnarok_Full_13_C.glb";
+
+    BABYLON.SceneLoader.ImportMesh("", url, fileName, scene, function (newMeshes) {
+		var root = newMeshes[0];
+		camera.target = root;
+	});
+    
+    scene.executeWhenReady(function()  {
+	let ground = scene.getMeshByName("node0_primitive12");
+        let rooted = scene.getMeshByName("__root__");
+	    camera.target = rooted;
+	      rooted.setEnabled(true);
+	let mymesh = rooted.getChildMeshes();
+	for (var i = 0; i < mymesh.length; i++) {
+	    if (mymesh[i].name == "node0") {continue;}
+	    if (mymesh[i].name == "node0_primitive13") {continue;}
+	    if (mymesh[i].name == "node0_primitive12") {continue;}
+	    mymesh[i].receiveShadows = true;
+	    shadowGenerator.addShadowCaster(mymesh[i],false);
+	    }
+        ground.receiveShadows = true;
+    });
+    
+    return scene;
+};
+
+var engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+var scene = createScene();
+    scene.debugLayer.show();
+    scene.executeWhenReady (() => {
+	engine.runRenderLoop(function () {
+	    supersample = true;
+	    antialias = true;
+	    if (scene) {
+		scene.render();
+	    }
+	    });
+    });	
+
+// Resize
+window.addEventListener("resize", function () {
+	engine.resize();
+});
+
                 window.initFunction = async function() {
                     
                     
