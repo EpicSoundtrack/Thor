@@ -3,7 +3,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-        <title>Babylon.js sample code</title>
+        <title>Thor</title>
 
         <!-- Babylon.js -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
@@ -92,7 +92,7 @@ var createScene = function () {
 
     //Adding an Arc Rotate Camera
     var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 100, BABYLON.Vector3.Zero(), scene);    
-	camera.attachControl(canvas, true);		
+	camera.attachControl(canvas, false);		
 	camera.minZ = .1;
 	camera.radius = 120.0;
 	camera.pinchDeltaPercentage = 0;
@@ -125,8 +125,8 @@ var createScene = function () {
     scene.executeWhenReady(function()  {
 	let ground = scene.getMeshByName("node0_primitive12");
         let rooted = scene.getMeshByName("__root__");
-	    camera.target = rooted;
-	      rooted.setEnabled(true);
+	    camera.target = new BABYLON.Zero();
+	    rooted.setEnabled(true);
 	let mymesh = rooted.getChildMeshes();
 	for (var i = 0; i < mymesh.length; i++) {
 	    if (mymesh[i].name == "node0") {continue;}
