@@ -115,11 +115,9 @@ var createScene = function () {
 
     url = "https://media.githubusercontent.com/media/EpicSoundtrack/Thor/main/data/glb/";
 
-    fileName = "Ragnarok_Full_13_C.glb";
+    fileName = "Ragnarok_Full_14_C.glb";
 
     BABYLON.SceneLoader.ImportMesh("", url, fileName, scene, function (newMeshes) {
-		var root = newMeshes[0];
-		camera.target = root;
 	});
     
     scene.executeWhenReady(function()  {
